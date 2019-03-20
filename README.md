@@ -11,7 +11,7 @@ The user can directly adjust the knobs to control Dry/Wet mix, delay time, and f
 ## GUI
 ![](Delay.PNG)
 
-## Audio Processing
+## Algorithm
 **Difference equation:** y[n] = dry * x[n] + wet * (x[n-D] + feedback * y[n-D])
 
 The flowchart for the audio processing is as follows:
