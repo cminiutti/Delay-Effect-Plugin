@@ -1,4 +1,5 @@
 # Delay-Effect-Plugin
+## Description
 This audio plugin implements a digital delay effect and is intended for use in a music production environment.
 
 Created in C++ using the JUCE API, the plugin can be supported in all platforms and exported in formats such as VST3, AU, and AAX.
@@ -7,7 +8,10 @@ The plugin comes with a creative GUI that presents the user with three knobs for
 
 The user can directly adjust the knobs to control Dry/Wet mix, delay time, and feedback of the delay.
 
+## GUI
 
+
+## Audio Processing
 **Difference equation:** y[n] = dry * x[n] + wet * (x[n-D] + feedback * y[n-D]) (where D = number of delay samples)
 
 The flowchart for the audio processing is as follows:
