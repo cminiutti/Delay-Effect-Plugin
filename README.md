@@ -9,7 +9,7 @@ The plugin comes with a creative GUI that presents the user with three knobs for
 The user can directly adjust the knobs to control Dry/Wet mix, delay time, and feedback of the delay.
 
 ## GUI
-
+![Delay GUI](Delay.png)
 
 ## Audio Processing
 **Difference equation:** y[n] = dry * x[n] + wet * (x[n-D] + feedback * y[n-D]) (where D = number of delay samples)
