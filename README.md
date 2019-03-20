@@ -17,7 +17,7 @@ The user can directly adjust the knobs to control Dry/Wet mix, delay time, and f
 The flowchart for the audio processing is as follows:
 
 1. Read sample from left and right channels into left and right delay buffers.
-2. Calculate the read pointer of the delay buffer based on current UI setting.
+2. Calculate the read pointer of the delay buffer based on current Delay Time setting.
 3. Read from the delay buffer from the read pointer.
 4. Update read pointer.
 5. Store current delayed sample as feedback (with feedback amount determined by UI setting).
