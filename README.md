@@ -11,6 +11,8 @@ The user can directly adjust the knobs to control Dry/Wet mix, delay time, and f
 ## GUI
 ![](Delay.PNG)
 
+(*Refer to the PluginEditor.cpp file for code*)
+
 ## Algorithm
 **Difference equation:** y[n] = dry * x[n] + wet * (x[n-D] + feedback * y[n-D])
 
@@ -29,3 +31,5 @@ accurate response to UI settings.
 
 It is also able to save and load its state so that, when used in a DAW, the settings used when the file was last saved will
 once again be available to the user.
+
+(*Refer to the "processBlock" function of the PluginProcessor.cpp file for code*)
