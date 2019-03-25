@@ -1,4 +1,4 @@
-# Delay-Effect-Plugin
+# Delay-Plugin
 ## Description
 This audio plugin implements a digital delay effect and is intended for use in a music production environment.
 
