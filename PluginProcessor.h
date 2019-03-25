@@ -1,21 +1,9 @@
-/*
-  ==============================================================================
-
-    This file was auto-generated!
-
-    It contains the basic framework code for a JUCE plugin processor.
-
-  ==============================================================================
-*/
-
 #pragma once
 
 #include "../JuceLibraryCode/JuceHeader.h"
 #define MAX_DELAY_TIME 2
 
 //==============================================================================
-/**
-*/
 class DelayAudioProcessor  : public AudioProcessor
 {
 public:
@@ -56,12 +44,12 @@ public:
     void getStateInformation (MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
 
-	//==============================================================================
+	//========================Self-created functions================================
 	float linInterpolate(float inSampleX, float inSampleY, float inFloatPhase);
 	float smoothParameterChanges(float smoothedVariable, AudioParameterFloat* pluginParameter);
 	float calculateDelayReadHead();
+	void updateWriteHead();
 
-	//==============================================================================
 	struct readHeads
 	{
 		int current, next;

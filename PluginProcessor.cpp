@@ -50,67 +50,6 @@ DelayAudioProcessor::~DelayAudioProcessor()
 }
 
 //==============================================================================
-const String DelayAudioProcessor::getName() const
-{
-    return JucePlugin_Name;
-}
-
-bool DelayAudioProcessor::acceptsMidi() const
-{
-   #if JucePlugin_WantsMidiInput
-    return true;
-   #else
-    return false;
-   #endif
-}
-
-bool DelayAudioProcessor::producesMidi() const
-{
-   #if JucePlugin_ProducesMidiOutput
-    return true;
-   #else
-    return false;
-   #endif
-}
-
-bool DelayAudioProcessor::isMidiEffect() const
-{
-   #if JucePlugin_IsMidiEffect
-    return true;
-   #else
-    return false;
-   #endif
-}
-
-double DelayAudioProcessor::getTailLengthSeconds() const
-{
-    return 0.0;
-}
-
-int DelayAudioProcessor::getNumPrograms()
-{
-    return 1;
-}
-
-int DelayAudioProcessor::getCurrentProgram()
-{
-    return 0;
-}
-
-void DelayAudioProcessor::setCurrentProgram (int index)
-{
-}
-
-const String DelayAudioProcessor::getProgramName (int index)
-{
-    return {};
-}
-
-void DelayAudioProcessor::changeProgramName (int index, const String& newName)
-{
-}
-
-//==============================================================================
 void DelayAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
 	// Convert delay time parameter from time units in seconds to samples
@@ -143,34 +82,6 @@ void DelayAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 	// Initialize smoothed time variable to current time parameter value
 	mTimeSmoothed = *mTimeParameter;
 }
-
-void DelayAudioProcessor::releaseResources()
-{
-}
-
-#ifndef JucePlugin_PreferredChannelConfigurations
-bool DelayAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
-{
-  #if JucePlugin_IsMidiEffect
-    ignoreUnused (layouts);
-    return true;
-  #else
-    // This is the place where you check if the layout is supported.
-    // In this template code we only support mono or stereo.
-    if (layouts.getMainOutputChannelSet() != AudioChannelSet::mono()
-     && layouts.getMainOutputChannelSet() != AudioChannelSet::stereo())
-        return false;
-
-    // This checks if the input layout matches the output layout
-   #if ! JucePlugin_IsSynth
-    if (layouts.getMainOutputChannelSet() != layouts.getMainInputChannelSet())
-        return false;
-   #endif
-
-    return true;
-  #endif
-}
-#endif
 
 void DelayAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer& midiMessages)
 {
@@ -210,14 +121,7 @@ void DelayAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer& 
 		mFeedbackLeft = delay_sample_left * *mFeedbackParameter;
 		mFeedbackRight = delay_sample_right * *mFeedbackParameter;
 
-		// Increment write head
-		mCircularBufferWriteHead++;
-
-		// Perform bounds checking on write head
-		if (mCircularBufferWriteHead >= mCircularBufferLength)
-		{
-			mCircularBufferWriteHead = 0;
-		}
+		updateWriteHead();
 
 		// Set output buffer with wet/dry mix of input sample and delayed sample
 		buffer.setSample(0, i, buffer.getSample(0, i) * (1 - *mDryWetParameter) + delay_sample_left * (*mDryWetParameter));
@@ -225,15 +129,61 @@ void DelayAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer& 
 	}
 }
 
-//==============================================================================
-bool DelayAudioProcessor::hasEditor() const
+//========================Self-created functions================================
+// Linearly interpolate between two samples if desired delay is fractional
+float DelayAudioProcessor::linInterpolate(float inSampleX, float inSampleY, float inFloatPhase)
 {
-    return true; // (change this to false if you choose to not supply an editor)
+	// Return linear interpolation between two samples
+	return (1 - inFloatPhase) * inSampleX + inFloatPhase * inSampleY;
 }
 
-AudioProcessorEditor* DelayAudioProcessor::createEditor()
+// This function prevents parameter values from jumping to fast during processing and causing audible artifacts
+float DelayAudioProcessor::smoothParameterChanges(float smoothedVariable, AudioParameterFloat* pluginParameter)
 {
-    return new DelayAudioProcessorEditor (*this);
+	return smoothedVariable = smoothedVariable - 0.0001*(smoothedVariable - *pluginParameter);
+}
+
+// Determine current read head for delay buffers
+float DelayAudioProcessor::calculateDelayReadHead()
+{
+	// Convert delay parameter from time units of seconds to samples
+	mDelayTimeInSamples = getSampleRate() * mTimeSmoothed;
+
+	// Calculate delay read head
+	mDelayReadHead = mCircularBufferWriteHead - mDelayTimeInSamples;
+
+	if (mDelayReadHead < 0)
+	{
+		mDelayReadHead += mCircularBufferLength;
+	}
+
+	return mDelayReadHead;
+}
+
+// Retrieve read heads prior to interpolation
+DelayAudioProcessor::readHeads DelayAudioProcessor::getReadHeads()
+{
+	// Get samples for performing linear interpolation
+	auto current = (int)mDelayReadHead;
+	auto next = current + 1;
+	auto fraction = mDelayReadHead - current;
+
+	if (next >= mCircularBufferLength)
+	{
+		next -= mCircularBufferLength;
+	}
+
+	return { current, next, fraction };
+}
+
+void DelayAudioProcessor::updateWriteHead()
+{
+	mCircularBufferWriteHead++;
+
+	if (mCircularBufferWriteHead >= mCircularBufferLength)
+	{
+		mCircularBufferWriteHead = 0;
+	}
 }
 
 //==============================================================================
@@ -260,59 +210,106 @@ void DelayAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
 	}
 }
 
-//==============================================================================
-// This creates new instances of the plugin..
+const String DelayAudioProcessor::getName() const
+{
+	return JucePlugin_Name;
+}
+
+bool DelayAudioProcessor::acceptsMidi() const
+{
+#if JucePlugin_WantsMidiInput
+	return true;
+#else
+	return false;
+#endif
+}
+
+bool DelayAudioProcessor::producesMidi() const
+{
+#if JucePlugin_ProducesMidiOutput
+	return true;
+#else
+	return false;
+#endif
+}
+
+bool DelayAudioProcessor::isMidiEffect() const
+{
+#if JucePlugin_IsMidiEffect
+	return true;
+#else
+	return false;
+#endif
+}
+
+double DelayAudioProcessor::getTailLengthSeconds() const
+{
+	return 0.0;
+}
+
+int DelayAudioProcessor::getNumPrograms()
+{
+	return 1;
+}
+
+int DelayAudioProcessor::getCurrentProgram()
+{
+	return 0;
+}
+
+void DelayAudioProcessor::setCurrentProgram(int index)
+{
+}
+
+const String DelayAudioProcessor::getProgramName(int index)
+{
+	return {};
+}
+
+void DelayAudioProcessor::changeProgramName(int index, const String& newName)
+{
+}
+
+bool DelayAudioProcessor::hasEditor() const
+{
+	return true; // (change this to false if you choose to not supply an editor)
+}
+
+AudioProcessorEditor* DelayAudioProcessor::createEditor()
+{
+	return new DelayAudioProcessorEditor(*this);
+}
+
+void DelayAudioProcessor::releaseResources()
+{
+}
+
+// This creates new instances of the plugin
 AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
-    return new DelayAudioProcessor();
+	return new DelayAudioProcessor();
 }
 
-//==============================================================================
-// Linearly interpolate between two samples if desired delay is fractional
-float DelayAudioProcessor::linInterpolate(float inSampleX, float inSampleY, float inFloatPhase)
+#ifndef JucePlugin_PreferredChannelConfigurations
+bool DelayAudioProcessor::isBusesLayoutSupported(const BusesLayout& layouts) const
 {
-	// Return linear interpolation between two samples
-	return (1 - inFloatPhase) * inSampleX + inFloatPhase * inSampleY;
+#if JucePlugin_IsMidiEffect
+	ignoreUnused(layouts);
+	return true;
+#else
+	// This is the place where you check if the layout is supported.
+	// In this template code we only support mono or stereo.
+	if (layouts.getMainOutputChannelSet() != AudioChannelSet::mono()
+		&& layouts.getMainOutputChannelSet() != AudioChannelSet::stereo())
+		return false;
+
+	// This checks if the input layout matches the output layout
+#if ! JucePlugin_IsSynth
+	if (layouts.getMainOutputChannelSet() != layouts.getMainInputChannelSet())
+		return false;
+#endif
+
+	return true;
+#endif
 }
-
-// Perform parameter change smoothing to avoid audio glitches
-float DelayAudioProcessor::smoothParameterChanges(float smoothedVariable, AudioParameterFloat* pluginParameter)
-{
-	// This operation prevents parameter values from jumping to fast during processing and causing audible artifacts
-	return smoothedVariable = smoothedVariable - 0.0001*(smoothedVariable - *pluginParameter);
-}
-
-// Determine current read head for delay buffers
-float DelayAudioProcessor::calculateDelayReadHead()
-{
-	// Convert delay parameter from time units of seconds to samples
-	mDelayTimeInSamples = getSampleRate() * mTimeSmoothed;
-
-	// Calculate delay read head
-	mDelayReadHead = mCircularBufferWriteHead - mDelayTimeInSamples;
-
-	// Perform bounds checking on read head
-	if (mDelayReadHead < 0)
-	{
-		mDelayReadHead += mCircularBufferLength;
-	}
-
-	return mDelayReadHead;
-}
-
-// Retrieve read heads prior to interpolation
-DelayAudioProcessor::readHeads DelayAudioProcessor::getReadHeads()
-{
-	// Get samples for performing linear interpolation
-	auto current = (int)mDelayReadHead;
-	auto next = current + 1;
-	auto fraction = mDelayReadHead - current;
-
-	// Perform bounds checking on next sample
-	if (next >= mCircularBufferLength)
-	{
-		next -= mCircularBufferLength;
-	}
-
-	return { current, next, fraction };
-}
+#endif

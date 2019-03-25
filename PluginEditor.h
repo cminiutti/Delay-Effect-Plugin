@@ -1,21 +1,9 @@
-/*
-  ==============================================================================
-
-    This file was auto-generated!
-
-    It contains the basic framework code for a JUCE plugin editor.
-
-  ==============================================================================
-*/
-
 #pragma once
 
 #include "../JuceLibraryCode/JuceHeader.h"
 #include "PluginProcessor.h"
 
 //==============================================================================
-/**
-*/
 class DelayAudioProcessorEditor  : public AudioProcessorEditor
 {
 public:
@@ -26,35 +14,25 @@ public:
     void paint (Graphics&) override;
     void resized() override;
 
-	//==============================================================================
+	//=========================Self-created functions===============================
+	void createSlider(Slider& slider, Label& label, AudioParameterFloat* parameter, const String& name, Rectangle<int> bounds);
+
 	struct Ellipse
 	{
-		float xLocation;
-		float yLocation;
-		float width;
-		float height;
-		float opacity;
+		float xLocation, yLocation, width, height, opacity;
 	};
 	Ellipse createEllipse();
-	void updateEllipseSize(Ellipse& ellipseRef);
+	void updateEllipseSize(Ellipse& ellipse);
 
 private:
-    // This reference is provided as a quick way for your editor to
-    // access the processor object that created it.
+    // Reference to the processor object that created this editor
     DelayAudioProcessor& processor;
 
-	// Declare sliders for GUI
-	Slider mFeedbackSlider;
-	Slider mDryWetSlider;
-	Slider mDelayTimeSlider;
+	// Sliders for GUI
+	Slider mFeedbackSlider, mDryWetSlider, mDelayTimeSlider;
 
-	// Declare labels corresponding to sliders
-	Label mFeedbackLabel;
-	Label mDryWetLabel;
-	Label mDelayTimeLabel;
-
-	// Declare array of colours for drawing ellipses
-	Array<Colour> pallette;
+	// Labels corresponding to sliders
+	Label mFeedbackLabel, mDryWetLabel, mDelayTimeLabel;
 	
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DelayAudioProcessorEditor)
 };
