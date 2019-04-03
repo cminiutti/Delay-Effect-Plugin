@@ -42,7 +42,8 @@ DelayAudioProcessor::~DelayAudioProcessor()
 		delete[] mCircularBufferLeft;
 		mCircularBufferLeft == nullptr;
 	}
-	if (mCircularBufferLeft != nullptr)
+
+	if (mCircularBufferRight != nullptr)
 	{
 		delete[] mCircularBufferRight;
 		mCircularBufferRight == nullptr;
@@ -58,6 +59,13 @@ void DelayAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 	// Set size of circular delay buffer in samples
 	mCircularBufferLength = sampleRate * MAX_DELAY_TIME;
 
+	// Destroy left circular buffer
+	if (mCircularBufferLeft != nullptr)
+	{
+		delete[] mCircularBufferLeft;
+		mCircularBufferLeft == nullptr;
+	}
+
 	// Create new delay buffer for left channel
 	if (mCircularBufferLeft == nullptr)
 	{
@@ -66,6 +74,13 @@ void DelayAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 	
 	// Clear any garbage data from left delay buffer
 	zeromem(mCircularBufferLeft, mCircularBufferLength * sizeof(float));
+
+	// Destroy right circular buffer
+	if (mCircularBufferRight != nullptr)
+	{
+		delete[] mCircularBufferRight;
+		mCircularBufferRight == nullptr;
+	}
 
 	// Create new delay buffer for right channel
 	if (mCircularBufferRight == nullptr)
